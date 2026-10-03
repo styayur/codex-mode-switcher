@@ -1,0 +1,37 @@
+# Original local source material is retained but never published.
+/local-originals/
+/changelog1.txt
+/Codex GPT - DeepSeek 一键切换脚本使用说明.md
+# Codex configuration and credentials belong outside the checkout.
+.codex/
+config.toml
+auth.json
+.env
+.env.*
+*.key
+*.pem
+*api-key*
+*api_key*
+*apikey*
+*token*
+*secret*
+credentials*
+mode-switcher/
+deepseek-state.json
+backups/
+*.bak
+*.tmp
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+log/
+logs/
+*.log
+*.jsonl
+sessions/
+archived_sessions/
+TestResults*
+coverage*
+.DS_Store
+Thumbs.db
