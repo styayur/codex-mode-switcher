@@ -1,0 +1,25 @@
+{
+  "source_commit": "5e99e50cebf50521b9da35969dcc533942615ec5",
+  "reviewed_on": "2026-10-09",
+  "diagram_source": "README.md",
+  "sources": [
+    {
+      "path": "codex-mode.ps1",
+      "anchors": [
+        "function Assert-ConfigShape",
+        "function Save-ProviderState",
+        "function Read-ProviderState",
+        "function Write-ConfigChange",
+        "function Write-AtomicText",
+        "[IO.FileShare]::None",
+        "function Invoke-CodexCheck"
+      ]
+    },
+    {
+      "path": "tests/codex-mode.Tests.ps1",
+      "anchors": [
+        "Describe"
+      ]
+    }
+  ]
+}

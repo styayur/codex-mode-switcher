@@ -1,5 +1,3 @@
-<div align="center">
-
 # Codex Mode Switcher
 
 **A small PowerShell tool for switching Codex provider and authentication selection.**
@@ -11,10 +9,7 @@
 [![CI](https://github.com/styayur/codex-mode-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/styayur/codex-mode-switcher/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/styayur/codex-mode-switcher)](https://github.com/styayur/codex-mode-switcher/releases/latest)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-![PowerShell 7.4+](https://img.shields.io/badge/PowerShell-7.4%2B-5391FE?logo=powershell&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-0078D6)
 
-</div>
 
 Switch between **ChatGPT OAuth / Codex plan usage** and **one saved custom API
 provider**, such as DeepSeek, without repeatedly editing `~/.codex/config.toml`.
@@ -109,7 +104,51 @@ English status label. Doctor runs only if advertised in `codex --help`; failures
 without rolling back the saved configuration. Login failure reports an error after the
 configuration has been saved.
 
+### Verified isolated switch and restore
+
+With a disposable `CODEX_HOME` containing only a sample provider named `example` and endpoint `https://example.invalid/v1`, these commands produced the following output on 2026-10-09. Use a separate child-process environment for the demo so your real Codex configuration is untouched.
+
+```powershell
+./codex-mode.ps1 Init -NoLogin -SkipDoctor
+./codex-mode.ps1 GPT -NoLogin -SkipDoctor
+./codex-mode.ps1 DeepSeek -NoLogin -SkipDoctor
+```
+
+```text
+[OK] Saved current custom provider.
+[OK] GPT: openai provider with ChatGPT OAuth. Model uses the Codex/account default.
+[OK] Restored custom provider: example
+```
+
+All three exited 0. The Init status/path lines are omitted. This verifies local configuration selection and restoration, not authentication or provider connectivity; both login and optional diagnostics were disabled.
+
 ## Architecture
+
+<!-- architecture:overview:start -->
+```mermaid
+flowchart TD
+  Lock[Acquire exclusive mutation lock] --> Read[Read config.toml]
+  Read --> Validate[Validate supported TOML shape]
+  Validate --> Select{Requested action}
+  Select -->|Init / GPT with custom provider| Save[Save provider fragment]
+  Save --> State[(deepseek-state.json / state backups)]
+  Select -->|DeepSeek / Toggle to provider| Restore[Validate saved provider and restore fields]
+  State --> Restore
+  Select -->|GPT without custom provider| GPT[Select openai / ChatGPT OAuth]
+  Save -->|GPT continues; Init stops| GPT
+  Restore --> Write[Concurrent-edit check; backup; atomic write]
+  GPT --> Write
+  Write --> Config[(config.toml / full config backups)]
+  Write -.-> CLI[Optional Codex login / diagnostics subprocess]
+```
+<!-- architecture:overview:end -->
+
+The diagram describes mutation commands; Status only reads selection metadata, and Init saves state without switching config. The file lock wraps reading/validation and mutation; it does not coordinate with other editors. Write-ConfigChange rechecks the original text before backup and atomic replacement.
+
+DeepSeek is the legacy command name for one saved custom provider, not a hard-coded remote service. Saved fragments are validated before restoration. Full backup rollback is manual, distinct from restoring the saved provider selection. A login/diagnostic failure does not roll back the config automatically. Auth credentials are owned by the optional Codex subprocess; state/backups can contain secrets already embedded in config and must stay private.
+
+[Source evidence and diagram verification](docs/architecture/README.md).
+
 
 ```text
 codex-mode.ps1
