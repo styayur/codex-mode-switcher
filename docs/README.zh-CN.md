@@ -79,3 +79,7 @@ Windows PowerShell 5.1 不支持；脚本未签名；备份不会自动删除。
 原始验证资料确认过自定义 Provider 与 ChatGPT 登录共存、Init、GPT 切换及 GPT 网络诊断。
 这些历史结果不是对所有版本和账号的兼容性承诺。当前回归测试使用临时目录和合成数据，
 不发送真实 API 请求。见 [CHANGELOG](../CHANGELOG.md)、[安全说明](../SECURITY.md) 和 [贡献说明](../CONTRIBUTING.md)。
+
+## 架构与核验
+
+[主 README 架构图](../README.md#architecture)和[源码核验记录](architecture/README.md)区分配置切换、已保存 Provider 恢复、手动备份回滚与可选 Codex 子进程；图表只维护一份。
