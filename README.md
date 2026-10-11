@@ -1,210 +1,219 @@
 # Codex Mode Switcher
 
-**A small PowerShell tool for switching Codex provider and authentication selection.**
+**A PowerShell controller for safely switching and starting Codex Desktop on Windows.**
 
-**Status:** 🟡 Initial release · **Version:** `0.1.0`
+**Status:** v0.2.0 development · Desktop end-to-end acceptance pending
 
-[Quick Start](#quick-start) · [Usage](#usage) · [Architecture](#architecture) · [中文说明](docs/README.zh-CN.md) · [Releases](https://github.com/styayur/codex-mode-switcher/releases) · [Issues](https://github.com/styayur/codex-mode-switcher/issues)
+[Quick Start](#quick-start) · [Usage](#usage) · [Architecture](#architecture) · [中文说明](docs/README.zh-CN.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 [![CI](https://github.com/styayur/codex-mode-switcher/actions/workflows/ci.yml/badge.svg)](https://github.com/styayur/codex-mode-switcher/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/styayur/codex-mode-switcher)](https://github.com/styayur/codex-mode-switcher/releases/latest)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+Select ChatGPT OAuth or one saved custom API provider, such as DeepSeek, without
+repeatedly editing `~/.codex/config.toml`. The controller backs up and verifies local
+configuration, coordinates normal Desktop exit, and optionally starts the application
+through Windows activation. It preserves native GPT model selection across switches.
 
-Switch between **ChatGPT OAuth / Codex plan usage** and **one saved custom API
-provider**, such as DeepSeek, without repeatedly editing `~/.codex/config.toml`.
-The script saves provider state, backs up configuration before changes, and restores
-the provider's original model and endpoint settings. It has no runtime module dependencies.
-
-This is an independent community project, unaffiliated with OpenAI or DeepSeek.
+This project is a **Desktop Controller**, not a CLI Profile Switcher. It provides no
+model API gateway, GUI, background service or resident agent. It is an independent
+community project, unaffiliated with OpenAI or DeepSeek.
 
 ## Quick Start
 
-Requirements: Windows, PowerShell **7.4+**, and a working Codex CLI installation for
-login and diagnostics. Configuration-only commands also work without Codex in PATH.
-Use your normal user account; administrator access is unnecessary.
-
-Download `codex-mode.ps1` from the [release](https://github.com/styayur/codex-mode-switcher/releases/latest)
-or clone this repository. Review the script first. If Windows attaches Mark of the Web
-(MOTW) to the download, `Unblock-File` can remove that mark:
+Use Windows and PowerShell **7.4+** as your normal user. No administrator access or Codex
+CLI is required. Desktop must be installed for `-Launch`. Keep the **whole checkout**:
+v0.2.0 uses `src/` alongside the entry script; the v0.1.0 release is a different version.
 
 ```powershell
-Unblock-File .\codex-mode.ps1
+git clone https://github.com/styayur/codex-mode-switcher.git
+cd codex-mode-switcher
+# While this upgrade is under review:
+git switch feat/desktop-controller-v0.2.0
+.\codex-mode.ps1 Diagnose -Json
 ```
 
-The script never changes ExecutionPolicy. Unblocking does not override an enforced
-organization policy or an AllSigned requirement; follow your administrator's policy.
+Review downloaded files. If Windows attaches Mark of the Web (MOTW), remove it from the
+reviewed PowerShell and C# source files with `Unblock-File`:
 
-Start with your **already working custom provider configuration** selected in Codex:
+```powershell
+Get-ChildItem . -Recurse -File -Include *.ps1,*.psm1,*.psd1,*.cs | Unblock-File
+```
+
+The tool never changes ExecutionPolicy. Organization policy and signing requirements
+still apply.
+
+Start with an **already working custom provider configuration**. Finish or stop relevant
+Desktop tasks and exit the app normally. Then:
 
 ```powershell
 .\codex-mode.ps1 Init
+.\codex-mode.ps1 GPT -Launch
+# After finishing tasks and exiting Desktop again:
+.\codex-mode.ps1 DeepSeek -Launch
 .\codex-mode.ps1 Status
-.\codex-mode.ps1 GPT
-.\codex-mode.ps1 DeepSeek
-.\codex-mode.ps1 Toggle
 ```
 
-`DeepSeek` is the original command name: it restores whichever single custom provider
-you saved, even if that provider has another ID. The script does not create a new API
-account, choose a DeepSeek model, or install a protocol adapter.
+Interactive launch asks you to confirm task safety. `-WaitForExit` allows a bounded wait
+for normal exit. It never closes Desktop for you. Process absence alone does not prove
+that tasks finished. Verify the selected provider/model in a **new Desktop task**.
 
-Close active Codex tasks and configuration editors before switching. Start a new CLI
-session or restart the client afterward; running threads may retain earlier settings.
+`DeepSeek` is the legacy name for restoring whichever single custom provider you saved.
+The tool does not create accounts, choose provider models or adapt API protocols.
 
 ## Authentication and billing
 
-**ChatGPT OAuth is not an OpenAI API key.** Codex supports ChatGPT sign-in and API-key
-authentication as separate options. ChatGPT sign-in uses eligible plan access (including
-Plus); API-key access uses the provider's API billing. This script does not grant access
-or change quotas. See [Codex authentication](https://learn.chatgpt.com/docs/auth).
+**ChatGPT OAuth is not an OpenAI API key.** ChatGPT subscription access and third-party
+API billing are separate. Codex can retain its ChatGPT login while a custom provider is
+selected. Configure your provider's appropriate environment-based credential separately;
+never put API keys in this repository. This tool does not grant access or change quotas.
 
-Codex can keep its ChatGPT login while a custom provider is selected. A provider using
-`env_key` with `requires_openai_auth = false` takes its API credential from that environment
-variable. `requires_openai_auth = true` instead uses OpenAI authentication and ignores
-`env_key`, so review your provider setup before saving it.
-
-The script never reads, copies, deletes, or rewrites the credential store itself. Its
-optional `codex login` command delegates authentication to Codex, which may update that
-store. `Status` reports configuration and a login-status exit code; neither proves that
-an inference request will succeed.
+The controller does not read, copy, delete or rewrite `auth.json`, and does not invoke
+`codex login`, doctor or other CLI commands. Sign in through Desktop when needed.
+Credentials must be available to the launched application, which can differ from a shell's
+environment for Windows-brokered MSIX activation. See OpenAI's
+[Desktop provider configuration guidance](https://learn.chatgpt.com/docs/enterprise/connect-to-a-gateway).
 
 ## Usage
 
 | Command | Behavior |
 | --- | --- |
-| `Status` (default) | Report current provider/model, login rule and state-file presence; no local filesystem writes. |
-| `Init` | Back up config and save the active custom provider. With OpenAI or no config, preserve existing saved state. |
-| `GPT` | Save the active custom provider, select `openai` and force `chatgpt` login. Remove custom model/catalog/endpoints. |
-| `DeepSeek` | Validate and restore saved selectors and provider tables into the current config. |
-| `Toggle` | OpenAI/default → saved provider; any active custom provider → GPT. |
+| `Status` / `Diagnose` | Read-only local selection, Desktop identity/state, backup and recovery diagnostics. |
+| `Init` | Back up an existing config and save its active custom provider. Preserve saved state when on GPT. |
+| `GPT` | Capture the active custom provider; select OpenAI/ChatGPT; retain or restore native model/reasoning selection. |
+| `DeepSeek` | Restore the saved custom provider's selectors and tables, saving native GPT selection first. |
+| `Toggle` | GPT/default → saved provider; custom provider → GPT. |
+| `Recover -TransactionId <id>` | Restore an interrupted, uncommitted transaction when recorded hashes and backups still match. |
 
-GPT leaves the model unset so Codex/account defaults choose it. MCP, sandbox, projects,
-other providers, and other root settings are retained. Edits to those settings made
-while in GPT mode also survive restoration.
-
-Repeated GPT and DeepSeek produce stable configuration. Repeated Init safely refreshes
-the saved provider and creates backups. Init while in GPT does not replace custom state.
-Only one custom state is stored: saving another replaces it, with the previous state backed up.
-Restoring while a different custom provider is active fails until you explicitly save it.
+All mutations stop if Desktop is running or its identity/state is unknown. Without
+`-Launch`, commands only change local configuration. Missing Desktop does not block
+configuration-only use when discovery is reliable. MCP, sandbox, projects and unrelated
+provider settings are preserved. Only one saved custom provider is managed.
 
 ```powershell
-# Local config only: no login queries, browser flow, or doctor
-.\codex-mode.ps1 GPT -NoLogin -SkipDoctor
+# Preview: no file creation, lock, prompt or activation
+.\codex-mode.ps1 GPT -Launch -DryRun -Json
 
-# Separate Codex home for this shell; default is Join-Path $HOME '.codex'
+# Bounded interactive coordination after you finish/stop tasks
+.\codex-mode.ps1 GPT -Launch -WaitForExit -ExitTimeoutSeconds 60
+
+# Automation: attest task completion explicitly; running Desktop still blocks
+.\codex-mode.ps1 GPT -Launch -NonInteractive -TasksStopped -LaunchTimeoutSeconds 30
+
+# Explicit identity: registered MSIX AUMID or validated signed Win32 GUI executable
+.\codex-mode.ps1 Diagnose -DesktopAppId '<registered-AUMID>' -Json
+.\codex-mode.ps1 Diagnose -DesktopPath 'C:\Applications\Codex\Desktop.exe' -Json
+
+# Configuration-only custom home (must be absolute)
 $env:CODEX_HOME = Join-Path $HOME 'codex-alternate'
-.\codex-mode.ps1 Status -NoLogin
+.\codex-mode.ps1 GPT -DryRun
 ```
 
-`-NoLogin` skips all Codex login commands, including Status/Init queries. `-SkipDoctor`
-skips GPT diagnostics. Otherwise GPT checks for a ChatGPT login and invokes `codex login`
-when the status command fails or does not identify ChatGPT. This depends on Codex's
-English status label. Doctor runs only if advertised in `codex --help`; failures warn
-without rolling back the saved configuration. Login failure reports an error after the
-configuration has been saved.
+The last path is illustrative, not an installation default. Automatic discovery uses
+package/Start-menu metadata or Win32 uninstall registration. Explicit paths must identify
+a signed OpenAI Codex GUI application; a CLI executable is rejected. Ambiguous results are
+`Unknown`. The executable path, not its process name, establishes a running identity.
 
-### Verified isolated switch and restore
+`-Json` prints a structured result; `-PassThru` returns a PowerShell object. Failures also
+raise a sanitized terminating error for a nonzero script exit. `Committed`, `Rollback`,
+`TransactionId` and `LaunchVerified` distinguish switching from startup. `LaunchVerified`
+means an identity-matching process was observed; **ProviderLoaded remains NotVerified**.
+`TaskActivity` remains `Unknown`. Diagnostics include local paths: redact them before sharing.
 
-With a disposable `CODEX_HOME` containing only a sample provider named `example` and endpoint `https://example.invalid/v1`, these commands produced the following output on 2026-10-09. Use a separate child-process environment for the demo so your real Codex configuration is untouched.
+### Compatibility with v0.1.0
+
+The five original commands and valid legacy provider state remain supported. `-NoLogin`
+and `-SkipDoctor` are accepted compatibility flags with no effect: CLI login and diagnostics
+are no longer implicit side effects. GPT now preserves known native model/reasoning fields
+instead of always clearing the model. First switching from a custom provider without saved
+GPT state still uses Codex/account defaults. Config-only commands now refuse a running or
+unidentifiable Desktop. Repeated selections produce stable config; audit journals and
+explicit Init backups may still accumulate.
+
+### Optional PowerShell shortcuts
 
 ```powershell
-./codex-mode.ps1 Init -NoLogin -SkipDoctor
-./codex-mode.ps1 GPT -NoLogin -SkipDoctor
-./codex-mode.ps1 DeepSeek -NoLogin -SkipDoctor
+.\scripts\Install-DesktopShortcut.ps1 -DryRun
+.\scripts\Install-DesktopShortcut.ps1
+# In a new PowerShell session:
+cdx-gpt
+cdx-deepseek -WaitForExit
+# Remove only the unchanged, owned block:
+.\scripts\Install-DesktopShortcut.ps1 -Action Uninstall
 ```
 
-```text
-[OK] Saved current custom provider.
-[OK] GPT: openai provider with ChatGPT OAuth. Model uses the Codex/account default.
-[OK] Restored custom provider: example
-```
-
-All three exited 0. The Init status/path lines are omitted. This verifies local configuration selection and restoration, not authentication or provider connectivity; both login and optional diagnostics were disabled.
+Installation is explicit, backed up and conflict-checked. Existing functions/aliases are
+not overwritten. The default target is the current user's all-hosts PowerShell profile;
+`-ProfilePath` can choose another. Startup only defines shortcuts; it runs no Codex checks.
+Uninstall from the original checkout before moving it, then reinstall from the new location.
 
 ## Architecture
 
 <!-- architecture:overview:start -->
 ```mermaid
 flowchart TD
-  Lock[Acquire exclusive mutation lock] --> Read[Read config.toml]
-  Read --> Validate[Validate supported TOML shape]
-  Validate --> Select{Requested action}
-  Select -->|Init / GPT with custom provider| Save[Save provider fragment]
-  Save --> State[(deepseek-state.json / state backups)]
-  Select -->|DeepSeek / Toggle to provider| Restore[Validate saved provider and restore fields]
-  State --> Restore
-  Select -->|GPT without custom provider| GPT[Select openai / ChatGPT OAuth]
-  Save -->|GPT continues; Init stops| GPT
-  Restore --> Write[Concurrent-edit check; backup; atomic write]
-  GPT --> Write
-  Write --> Config[(config.toml / full config backups)]
-  Write -.-> CLI[Optional Codex login / diagnostics subprocess]
+  Command[PowerShell command] --> Controller[Desktop Controller: validate and plan]
+  Controller --> Discovery[Discover Windows identity and running state]
+  Discovery --> Safe{Safe to switch?}
+  Safe -->|Running: user finishes tasks and exits| Wait[Bounded interactive wait]
+  Wait --> Safe
+  Safe -->|Unknown or cancelled| Stop[Report without mutation]
+  Safe -->|Ready| Transaction[Config Transaction: lock and check snapshots]
+  Transaction --> Backup[Verified byte backups and Prepared journal]
+  Backup --> Apply[Atomic file replacements and verification]
+  Apply --> Commit[Durable Committed journal; release lock]
+  Apply -->|Failure before commit| Recover[Conditional rollback or recovery required]
+  Commit -->|Explicit Launch; recheck files and identity| Activation[Windows Application Activation]
+  Activation --> MSIX[MSIX: registered AUMID via Windows COM]
+  Activation --> Win32[Win32: signed GUI executable]
+  MSIX --> Observe[Bounded process observation]
+  Win32 --> Observe
+  Observe --> Result[Report process result; provider loading unverified]
+  Commit -->|Configuration only| Result
 ```
 <!-- architecture:overview:end -->
 
-The diagram describes mutation commands; Status only reads selection metadata, and Init saves state without switching config. The file lock wraps reading/validation and mutation; it does not coordinate with other editors. Write-ConfigChange rechecks the original text before backup and atomic replacement.
-
-DeepSeek is the legacy command name for one saved custom provider, not a hard-coded remote service. Saved fragments are validated before restoration. Full backup rollback is manual, distinct from restoring the saved provider selection. A login/diagnostic failure does not roll back the config automatically. Auth credentials are owned by the optional Codex subprocess; state/backups can contain secrets already embedded in config and must stay private.
-
-[Source evidence and diagram verification](docs/architecture/README.md).
-
+Read-only commands and DryRun stop before the transaction. The commit boundary is a
+verified, durable `Committed` journal. Pre-commit failure attempts restoration only when
+current bytes match recorded before/after hashes. Startup failure **never rolls back a
+committed selection**. Newer external edits are preserved when detected.
 
 ```text
-codex-mode.ps1
-  -> $env:CODEX_HOME or $HOME/.codex
-     -> config.toml                    current user-level selection
-     -> mode-switcher/
-        -> deepseek-state.json         saved provider selectors and tables
-        -> backups/config.*.toml       exact pre-change configuration
-        -> backups/state.*.json        previous saved provider state
-        -> .lock                       serializes this script's writes
+codex-mode.ps1             public entry
+src/                      config, state, transaction, Desktop and diagnostics modules
+scripts/                  explicit profile installer and development checks
+tests/                    isolated Pester tests and synthetic application launchers
+docs/                     Chinese guide, architecture, troubleshooting and validation
+.github/workflows/        Windows checks and architecture rendering
 
-GPT:      capture custom state -> back up config -> select OpenAI / ChatGPT
-DeepSeek: validate saved state -> back up config -> restore custom provider
+$env:CODEX_HOME or $HOME/.codex/
+  config.toml
+  mode-switcher/
+    deepseek-state.json   one saved custom provider
+    gpt-state.json        native model/reasoning selection
+    backups/              exact prior bytes of changed files
+    transactions/         hashes, roles, status and backup references
+    .lock                 serializes this tool's writers
 ```
 
-Saved root keys: `model`, `model_provider`, `model_catalog_json`, `openai_base_url`,
-`chatgpt_base_url`, and `forced_login_method`. The active `[model_providers.<id>]`
-table and its nested tables are saved. The legacy state filename and valid pre-release
-state files without a schema version remain supported.
-
-Config and state writes use a same-directory temporary file and atomic file replacement.
-Config is checked for concurrent edits before replacement. The lock coordinates this
-script's invocations; external applications do not honor it. Backups are created before
-each config change; Init also backs up an existing config. No config exists to back up
-on the first GPT command in an empty home.
-
-## Recovery
-
-A missing/corrupt saved state stops restoration without altering config. A valid saved
-state can restore selectors into a missing config, but cannot recover unrelated settings
-that were in that missing file. For full recovery, inspect and select a config backup:
-
-```powershell
-$codexDir = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
-Get-ChildItem (Join-Path $codexDir 'mode-switcher/backups') -Filter 'config.*.toml'
-# Select and review the required backup before copying it to config.toml.
-```
+See [architecture and source evidence](docs/architecture/README.md),
+[audit and Windows capability evidence](docs/DESKTOP-VALIDATION.md), and
+[recovery instructions](docs/TROUBLESHOOTING.md).
 
 ## Security
 
-- Keep API keys in environment variables or your credential manager, never this repository.
-- The tool does not extract keys from the environment or include them in state or status output.
-- Provider state contains configuration fragments; backups contain the full config.
-  If your config has embedded keys, static authorization headers or private paths, those
-  will also be in these local files. Migrate secrets to `env_key`/environment headers first.
-- `.gitignore` excludes auth files, local config/state/backups, environments, common key/token
-  filenames, databases, logs and sessions. It cannot detect a secret in any arbitrary filename.
-- Treat the Codex home, state and backups as private local data. Do not attach them to issues.
-- No automatic cleanup deletes backups or session data. Review disk usage yourself.
+- Keep API keys in environment variables or a credential manager, outside the checkout.
+- Credentials, session files and databases are never accessed by the controller.
+- Config backups and provider fragments can contain secrets already embedded in your
+  config. Keep them private; prefer environment-backed credentials before using this tool.
+- No forced termination, process injection, undocumented Desktop API or task cancellation.
+- No automatic deletion of backups. Ignore rules are safeguards, not a secret scanner.
+- The lock coordinates this tool only. External applications can race the final filesystem
+  check/write or activation; keep configuration editors closed during switching.
 
-See [SECURITY.md](SECURITY.md) for private vulnerability reporting.
+See [SECURITY.md](SECURITY.md) for the data boundary and private vulnerability reporting.
 
 ## Testing
-
-CI uses a Windows runner, PowerShell syntax parsing, PSScriptAnalyzer **1.25.0**, and
-Pester **5.7.1**. Install these development dependencies and run:
 
 ```powershell
 Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
@@ -212,36 +221,37 @@ Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Forc
 pwsh -NoProfile -File .\scripts\Test-Project.ps1
 ```
 
-Tests use isolated temporary Codex homes and synthetic endpoints. They exercise Status,
-Init, both selections, Toggle, repeated operations, custom home paths, byte-exact backups,
-missing/corrupt/injected state, unsupported configuration, locks and unrelated settings.
-They do not contact real providers or use real credentials.
+Windows CI parses PowerShell, runs lint and executes isolated Pester tests. Tests use
+synthetic homes, application identities and launchers. No real Desktop is started or
+closed. Mocked test success, native discovery observations and full Desktop session
+acceptance are reported separately in [the validation record](docs/DESKTOP-VALIDATION.md).
 
 ## Limitations
 
-- This is a conservative line editor, not a full TOML parser. Use ordinary single-line
-  assignments, bare managed root keys and bare provider table names/IDs. Multiline values,
-  quoted provider table components and provider array tables are rejected before mutation.
-  Unrelated quoted project headers, one-line arrays and unrelated array tables are preserved.
-  Start from valid TOML; unrelated values are not fully syntax-validated.
-- Only user-level config is changed. Project/profile/managed settings or CLI overrides can
-  take precedence. Existing threads may keep their provider/model settings.
-- Only one saved custom provider is managed. There is no provider registry or UI.
-- Protocol support depends on the Codex version and endpoint. Current Codex configuration
-  documents `wire_api = "responses"`; direct DeepSeek connectivity or a Chat Completions
-  endpoint is not guaranteed. Supply a compatible working endpoint/adapter yourself.
-  See [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
-- Windows PowerShell 5.1 is unsupported. Windows is the tested platform. The script is unsigned.
-- Atomic replacement requires filesystem support. External editors can still race the final
-  write; the script's lock is not an operating-system-wide Codex configuration lock.
+- No guarantee of hot reload or seamless continuation of old sessions across providers.
+  Restart normally and verify in a new task. No CLI profiles or internal App Server control.
+- Third-party API compatibility belongs to that service and your Codex version; a working
+  protocol-compatible endpoint is required. Direct DeepSeek inference is not verified here.
+- MSIX `-Launch` currently requires the default Codex home with no conflicting persistent
+  `CODEX_HOME`. Brokered environment inheritance is unverified; custom homes are refused.
+  Win32 launch explicitly passes `CODEX_HOME`, but its actual Desktop consumption needs E2E testing.
+- Only user-level config is edited. An active root profile blocks launch; project, managed,
+  environment and application overrides are not comprehensively inspected.
+- Conservative TOML editing supports ordinary single-line assignments and bare managed
+  keys/provider table names. Multiline values and quoted/array provider tables are refused.
+  Unrelated TOML is preserved, not fully parsed; start from valid configuration.
+- Each file replacement is atomic on supported filesystems. A multi-file transaction uses
+  a recovery journal, not a filesystem-wide atomic commit. Linked/reparse paths are refused.
+- The scripts are unsigned. Windows PowerShell 5.1 is used only as the inbox Appx discovery
+  bridge; users run the controller with PowerShell 7.4+.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Keep changes small, add regression coverage for
-configuration behavior, and use only synthetic fixtures in reports and tests.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Real Desktop restart/provider acceptance is still
+required before v0.2.0 release; this branch is delivered for review without auto-merging.
 
 ## License
 
 [MIT](LICENSE), following the Stya Yur Open Source Studio
 [license policy](https://github.com/styayur/styayur/blob/main/LICENSE_POLICY.md) for small
-scripts and automation. OpenAI, Codex, ChatGPT and DeepSeek names belong to their respective owners.
+scripts and automation. Product names belong to their respective owners.

@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.2.0] - Unreleased
+
+### Added
+
+- Windows Desktop Controller with explicit Launch, bounded normal-exit coordination,
+  structured Diagnose, DryRun and NonInteractive modes. No Desktop/task termination.
+- Registered MSIX AUMID discovery and public Windows activation; signed Win32 GUI
+  executable validation. Exact executable-path process matching, with Unknown on ambiguity.
+- Journaled config/provider/GPT-state transactions: verified byte backups, atomic file
+  replacement, concurrent-edit checks and conditional pre-commit rollback/recovery.
+- Explicit profile shortcut install/preview/uninstall with backups and conflict refusal.
+- Isolated Desktop lifecycle, discovery, fault/recovery and profile regression coverage;
+  architecture, troubleshooting and separate mocked/native/manual acceptance records.
+
+### Changed
+
+- GPT now retains native model and reasoning selection through custom-provider round trips.
+- Managed TOML key matching respects case, preserving unrelated case-distinct keys.
+- Original commands and legacy provider state remain compatible. NoLogin/SkipDoctor remain
+  accepted but no longer invoke CLI login/doctor. Authentication stays in Desktop.
+- Config-only mutations also refuse a running or unidentifiable Desktop. The complete src/
+  directory is now required beside the entry script.
+
+### Safety boundaries and pending acceptance
+
+- Startup failure after a durable commit does not roll back config. Changes detected after
+  commit stop activation while preserving newer data. Process observation is not provider
+  verification; task activity remains unknown without user attestation.
+- MSIX launch with custom CODEX_HOME is conservatively refused pending environment evidence.
+- Real Windows MSIX discovery was observed read-only. Actual MSIX/Win32 launch, new-task
+  provider selection and credential environment E2E remain required before release.
+
+[0.2.0]: https://github.com/styayur/codex-mode-switcher/compare/main...feat/desktop-controller-v0.2.0
+
 ## [0.1.0] - 2026-10-04
 
 ### Added
