@@ -5,6 +5,7 @@ param()
 
 BeforeAll {
     $script:Entry = Join-Path (Split-Path $PSScriptRoot) 'codex-mode.ps1'
+    Import-Module (Join-Path (Split-Path $PSScriptRoot) 'src/CodexMode.psm1')
     $script:OriginalHome = $env:CODEX_HOME
     $script:Fixture = @'
 # Synthetic configuration; no credentials or personal paths.
@@ -54,6 +55,8 @@ AfterAll { $env:CODEX_HOME = $script:OriginalHome }
 
 Describe 'Codex provider switching in an isolated CODEX_HOME' {
     BeforeEach {
+        Mock Get-DesktopIdentity -ModuleName CodexMode { [pscustomobject]@{ State = 'NotInstalled'; Reason = 'SyntheticInventory'; Reliable = $true; Kind = $null; Aumid = $null; ExecutablePath = $null; AllExecutablePaths = @(); PackageFamily = $null; Version = $null; ActivationMethod = $null } }
+        Mock Get-DesktopState -ModuleName CodexMode { [pscustomobject]@{ State = 'NotInstalled'; Reliable = $true; ProcessIds = @(); TaskActivity = 'Unknown' } }
         $env:CODEX_HOME = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $env:CODEX_HOME | Out-Null
         $script:Config = Join-Path $env:CODEX_HOME 'config.toml'
@@ -286,7 +289,7 @@ Describe 'Codex provider switching in an isolated CODEX_HOME' {
     }
 }
 
-Describe 'Optional Codex commands with a synthetic CLI' {
+Describe 'Legacy flags and removal of implicit CLI authentication (v0.2 migration)' {
     BeforeAll {
         # Function precedence replaces the installed CLI in this test process.
         function global:codex {
@@ -302,6 +305,8 @@ Describe 'Optional Codex commands with a synthetic CLI' {
         }
     }
     BeforeEach {
+        Mock Get-DesktopIdentity -ModuleName CodexMode { [pscustomobject]@{ State = 'NotInstalled'; Reason = 'SyntheticInventory'; Reliable = $true; Kind = $null; Aumid = $null; ExecutablePath = $null; AllExecutablePaths = @(); PackageFamily = $null; Version = $null; ActivationMethod = $null } }
+        Mock Get-DesktopState -ModuleName CodexMode { [pscustomobject]@{ State = 'NotInstalled'; Reliable = $true; ProcessIds = @(); TaskActivity = 'Unknown' } }
         $env:CODEX_HOME = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
         $global:CodexModeCalls = [Collections.Generic.List[string]]::new()
         $global:CodexModeStatusExit = 0
@@ -317,32 +322,32 @@ Describe 'Optional Codex commands with a synthetic CLI' {
             Remove-Variable -Name $name -Scope Global
         }
     }
-    It 'queries login and runs supported doctor without relogin for ChatGPT' {
+    It 'does not invoke CLI login or diagnostics when GPT is selected' {
         & $script:Entry GPT 6>$null
-        ($global:CodexModeCalls -join ',') | Should -BeExactly 'login status,--help,doctor'
+        ($global:CodexModeCalls -join ',') | Should -BeExactly ''
     }
-    It 'requests login when successful status identifies an API key' {
+    It 'does not inspect or overwrite a CLI API-key login' {
         $global:CodexModeStatusText = 'Logged in using an API key'
         & $script:Entry GPT -SkipDoctor 6>$null
-        ($global:CodexModeCalls -join ',') | Should -BeExactly 'login status,login'
+        ($global:CodexModeCalls -join ',') | Should -BeExactly ''
     }
-    It 'requests login when status fails' {
+    It 'does not initiate browser login when CLI status would fail' {
         $global:CodexModeStatusExit = 1
         & $script:Entry GPT -SkipDoctor 6>$null
-        ($global:CodexModeCalls -join ',') | Should -BeExactly 'login status,login'
+        ($global:CodexModeCalls -join ',') | Should -BeExactly ''
     }
-    It 'reports login failure after preserving the selected configuration' {
+    It 'commits configuration independently of CLI login availability' {
         $global:CodexModeStatusExit = 1
         $global:CodexModeLoginExit = 1
-        { & $script:Entry GPT -SkipDoctor 6>$null } | Should -Throw '*login failed*'
+        { & $script:Entry GPT -SkipDoctor 6>$null } | Should -Not -Throw
         [IO.File]::ReadAllText((Join-Path $env:CODEX_HOME 'config.toml')) | Should -Match 'forced_login_method = "chatgpt"'
     }
-    It 'skips an unsupported doctor without failing the selection' {
+    It 'does not probe doctor support implicitly' {
         $global:CodexModeHelp = '  exec  Synthetic execution'
         & $script:Entry GPT -NoLogin 6>$null 3>$null
-        ($global:CodexModeCalls -join ',') | Should -BeExactly '--help'
+        ($global:CodexModeCalls -join ',') | Should -BeExactly ''
     }
-    It 'keeps configuration when optional diagnostics fail' {
+    It 'keeps configuration independent of CLI diagnostics' {
         $global:CodexModeDoctorExit = 1
         { & $script:Entry GPT -NoLogin 6>$null 3>$null } | Should -Not -Throw
         [IO.File]::ReadAllText((Join-Path $env:CODEX_HOME 'config.toml')) | Should -Match 'model_provider = "openai"'
@@ -353,10 +358,10 @@ Describe 'Optional Codex commands with a synthetic CLI' {
         & $script:Entry Init -NoLogin 6>$null
         $global:CodexModeCalls.Count | Should -Be 0
     }
-    It 'Status queries login but hides raw CLI output' {
+    It 'Status is local and never forwards CLI account output' {
         $global:CodexModeStatusText = 'synthetic-private-account-label'
         $output = & $script:Entry Status 6>&1 | Out-String
         $output | Should -Not -Match 'synthetic-private-account-label'
-        ($global:CodexModeCalls -join ',') | Should -BeExactly 'login status'
+        ($global:CodexModeCalls -join ',') | Should -BeExactly ''
     }
 }

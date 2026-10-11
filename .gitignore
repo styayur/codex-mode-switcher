@@ -18,6 +18,8 @@ auth.json
 credentials*
 mode-switcher/
 deepseek-state.json
+gpt-state.json
+*.codex-mode.lock
 backups/
 *.bak
 *.tmp

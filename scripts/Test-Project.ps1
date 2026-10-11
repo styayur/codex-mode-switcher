@@ -7,7 +7,7 @@ $root = Split-Path $PSScriptRoot
 # different installed Pester version, whose assembly cannot be unloaded.
 Import-Module Pester -RequiredVersion 5.7.1
 $files = @(Get-ChildItem $root -Recurse -File | Where-Object {
-    $_.Extension -in '.ps1', '.psd1' -and $_.FullName -notmatch '[\\/]local-originals[\\/]'
+    $_.Extension -in '.ps1', '.psm1', '.psd1' -and $_.FullName -notmatch '[\\/]local-originals[\\/]'
 })
 foreach ($file in $files) {
     $parseErrors = $null
