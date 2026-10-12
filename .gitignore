@@ -17,7 +17,12 @@ auth.json
 *secret*
 credentials*
 mode-switcher/
+ownership.json
+CodexModeSwitcher-*.zip
+SHA256SUMS.txt
 deepseek-state.json
+gpt-state.json
+*.codex-mode.lock
 backups/
 *.bak
 *.tmp

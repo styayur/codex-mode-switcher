@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.2.1] - 2026-10-12
+
+### Added
+
+- Importable CodexModeSwitcher module with Start-CodexMode, Get-CodexStatus,
+  Test-CodexEnvironment and the codex-mode command alias; legacy script retained.
+- Optional Windows Terminal JSON fragments with three unique profiles, without modifying
+  settings.json. Optional native Start Menu shortcuts and a cmd adapter.
+- Preview-by-default integration install/uninstall, explicit Apply, ownership/hash checks,
+  list and uninstall-all, verified backups and conditional failure recovery.
+- Opt-in fixed-text Windows toast requests through a temporary native helper. Notification
+  errors cannot change switching results; no resident component or registry handler.
+- Module release archive with SHA-256 checksum and isolated native integration tests.
+
+### Scope and validation limits
+
+- Includes the previously unmerged v0.2.0 Desktop Controller baseline below. There was no
+  separate v0.2.0 release. Authentication/session boundaries remain unchanged.
+- Native shortcut serialization and identity are tested in temporary folders. Terminal UI,
+  visible toast delivery and real Desktop provider E2E remain manual acceptance items.
+- Missing Terminal is reported without mutation. Modified/unowned integration files are
+  preserved; retained backups/receipts are private local data.
+
+## Desktop Controller baseline (included in 0.2.1)
+
+### Added
+
+- Windows Desktop Controller with explicit Launch, bounded normal-exit coordination,
+  structured Diagnose, DryRun and NonInteractive modes. No Desktop/task termination.
+- Registered MSIX AUMID discovery and public Windows activation; signed Win32 GUI
+  executable validation. Exact executable-path process matching, with Unknown on ambiguity.
+- Journaled config/provider/GPT-state transactions: verified byte backups, atomic file
+  replacement, concurrent-edit checks and conditional pre-commit rollback/recovery.
+- Explicit profile shortcut install/preview/uninstall with backups and conflict refusal.
+- Isolated Desktop lifecycle, discovery, fault/recovery and profile regression coverage;
+  architecture, troubleshooting and separate mocked/native/manual acceptance records.
+
+### Changed
+
+- GPT now retains native model and reasoning selection through custom-provider round trips.
+- Managed TOML key matching respects case, preserving unrelated case-distinct keys.
+- Original commands and legacy provider state remain compatible. NoLogin/SkipDoctor remain
+  accepted but no longer invoke CLI login/doctor. Authentication stays in Desktop.
+- Config-only mutations also refuse a running or unidentifiable Desktop. The complete src/
+  directory is now required beside the entry script.
+
+### Safety boundaries and pending acceptance
+
+- Startup failure after a durable commit does not roll back config. Changes detected after
+  commit stop activation while preserving newer data. Process observation is not provider
+  verification; task activity remains unknown without user attestation.
+- MSIX launch with custom CODEX_HOME is conservatively refused pending environment evidence.
+- Real Windows MSIX discovery was observed read-only. Actual MSIX/Win32 launch, new-task
+  provider selection and credential environment E2E remain unverified in the integration release.
+
+[0.2.0]: https://github.com/styayur/codex-mode-switcher/compare/main...feat/desktop-controller-v0.2.0
+[0.2.1]: https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1
+
 ## [0.1.0] - 2026-10-04
 
 ### Added
