@@ -2,7 +2,7 @@
 
 Windows 上的 PowerShell **Codex Desktop Controller**。通过备份、校验和恢复
 `config.toml` 与 Provider 状态，在 ChatGPT OAuth 和一个已保存的自定义 API Provider
-之间切换，并可显式启动 Desktop。v0.2.0 尚待真实 Desktop 端到端验收。
+之间切换，并可显式启动 Desktop。v0.2.1 增加 Windows 原生集成；真实 Desktop Provider 端到端行为仍未验证。
 
 [English README](../README.md) · [故障恢复](TROUBLESHOOTING.md) · [验证记录](DESKTOP-VALIDATION.md)
 
@@ -59,6 +59,50 @@ Get-ChildItem . -Recurse -File -Include *.ps1,*.psm1,*.psd1,*.cs | Unblock-File
 `Committed` 表示配置是否提交。`LaunchVerified` 只表示观察到身份匹配的进程，
 `ProviderLoaded` 始终为 `NotVerified`，不能据此断言新 Provider 已载入。
 进程不存在也不能证明任务已全部完成。请重启后使用新任务验证模型和 Provider。
+
+## v0.2.1 模块与 Windows 集成
+
+源码目录中执行 `Import-Module .\CodexModeSwitcher.psd1`；把 Release 模块包解压到当前用户
+PowerShell 模块目录后，可直接按名称导入。详见 [Windows Integration](WINDOWS-INTEGRATION.md)。
+
+```powershell
+Import-Module CodexModeSwitcher
+Get-CodexStatus
+Test-CodexEnvironment
+Start-CodexMode GPT -DryRun
+Start-CodexMode GPT
+Start-CodexMode DeepSeek
+```
+
+`Start-CodexMode` 默认安全切换后启动 Desktop，`-ConfigurationOnly` 仅切换配置。
+支持 `-WhatIf`、`-DryRun` 及原有等待/非交互安全参数。模块函数返回结构化结果，自动化调用者
+应检查 `State`；脚本和 cmd 入口还会通过非零退出码报告失败。导入模块不会安装集成或启动应用。
+
+```powershell
+codex-mode install terminal          # 默认预览，不写文件
+codex-mode install terminal -Apply   # 审查预览后显式应用
+codex-mode install startmenu -Apply
+codex-mode integration list
+codex-mode uninstall terminal -Apply
+codex-mode integration uninstall-all -Apply
+```
+
+Terminal 使用独立 JSON fragment，添加 Codex GPT、Codex DeepSeek、Codex Diagnose，
+不改写已有 settings.json。开始菜单集成创建同名原生快捷方式；默认不安装，不创建桌面快捷方式，
+不注册右键菜单。卸载默认也预览，添加 `-Apply` 才执行；仅删除有所有权记录且哈希匹配的文件，
+用户改动与无关文件会保留。备份、所有权记录和空目录保留用于审计恢复。
+
+```powershell
+codex-mode install notifications -Apply
+Start-CodexMode GPT -Notify
+codex-mode uninstall notifications -Apply
+```
+
+通知另行启用，会创建专用的开始菜单身份快捷方式；没有后台服务。
+每次还需显式 `-Notify`。通知只含固定状态文字，发送失败或被 Windows 屏蔽都不影响核心结果。
+诊断和预览不会发通知。原有 Profile 快捷函数由旧安装器单独卸载，不纳入新的三类集成管理。
+
+项目不管理认证，不修改会话数据库，不提供模型网关，不运行后台服务，也不替代 Codex 官方配置。
 
 ## 认证、数据与兼容性
 

@@ -1,6 +1,29 @@
 # Changelog
 
-## [0.2.0] - Unreleased
+## [0.2.1] - 2026-10-12
+
+### Added
+
+- Importable CodexModeSwitcher module with Start-CodexMode, Get-CodexStatus,
+  Test-CodexEnvironment and the codex-mode command alias; legacy script retained.
+- Optional Windows Terminal JSON fragments with three unique profiles, without modifying
+  settings.json. Optional native Start Menu shortcuts and a cmd adapter.
+- Preview-by-default integration install/uninstall, explicit Apply, ownership/hash checks,
+  list and uninstall-all, verified backups and conditional failure recovery.
+- Opt-in fixed-text Windows toast requests through a temporary native helper. Notification
+  errors cannot change switching results; no resident component or registry handler.
+- Module release archive with SHA-256 checksum and isolated native integration tests.
+
+### Scope and validation limits
+
+- Includes the previously unmerged v0.2.0 Desktop Controller baseline below. There was no
+  separate v0.2.0 release. Authentication/session boundaries remain unchanged.
+- Native shortcut serialization and identity are tested in temporary folders. Terminal UI,
+  visible toast delivery and real Desktop provider E2E remain manual acceptance items.
+- Missing Terminal is reported without mutation. Modified/unowned integration files are
+  preserved; retained backups/receipts are private local data.
+
+## Desktop Controller baseline (included in 0.2.1)
 
 ### Added
 
@@ -30,9 +53,10 @@
   verification; task activity remains unknown without user attestation.
 - MSIX launch with custom CODEX_HOME is conservatively refused pending environment evidence.
 - Real Windows MSIX discovery was observed read-only. Actual MSIX/Win32 launch, new-task
-  provider selection and credential environment E2E remain required before release.
+  provider selection and credential environment E2E remain unverified in the integration release.
 
 [0.2.0]: https://github.com/styayur/codex-mode-switcher/compare/main...feat/desktop-controller-v0.2.0
+[0.2.1]: https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1
 
 ## [0.1.0] - 2026-10-04
 

@@ -30,4 +30,11 @@ troubleshooting, architecture evidence and CHANGELOG for behavior changes.
 Before a PR, run the full checks, review staged changes for credentials/private paths and
 scan tracked files/history with a secret scanner. Do not publish raw host diagnostics.
 Report mocked tests, read-only Windows observations and actual Desktop E2E separately.
-v0.2.0 merge/release requires the manual acceptance in [DESKTOP-VALIDATION.md](docs/DESKTOP-VALIDATION.md).
+Record interactive acceptance separately using [DESKTOP-VALIDATION.md](docs/DESKTOP-VALIDATION.md).
+The v0.2.1 integration release explicitly retains those unverified Desktop limits; do not
+describe mock/native-file tests as live UI or provider acceptance.
+
+Integration tests must mock Get-IntegrationContext into TestDrive. Native Shell shortcut
+creation is allowed only there; real toast submission, Start Menu installation and Terminal
+settings changes are forbidden in automated tests. Build distributable archives from clean
+tracked source using scripts/Build-Release.ps1, never zip the whole working directory.

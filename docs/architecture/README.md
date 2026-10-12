@@ -2,7 +2,7 @@
 
 The authoritative diagram is the marked Mermaid block in [README](../../README.md#architecture).
 It separates **Desktop Controller**, **Config Transaction**, and **Windows Application Activation**.
-This document describes the v0.2.0 development implementation; it does not certify provider connectivity.
+This document describes the v0.2.1 implementation; it does not certify provider connectivity.
 
 ## Source map
 
@@ -18,6 +18,9 @@ This document describes the v0.2.0 development implementation; it does not certi
 | Activation | Documented Windows COM AUMID activation | [WindowsActivation.cs](../../src/WindowsActivation.cs) |
 | Diagnostics | Allowlisted selection metadata and safe error messages | [Diagnostics.ps1](../../src/Diagnostics.ps1) |
 | Optional shortcuts | Explicit conflict-checked profile install/uninstall | [Shortcut.ps1](../../src/Shortcut.ps1) |
+| Public module | Start/status/environment functions and command routing | [Public.ps1](../../src/Public.ps1), [manifest](../../CodexModeSwitcher.psd1) |
+| Windows integration | Preview, fixed artifact targets, ownership/hash checks and conditional recovery | [Integration.ps1](../../src/Integration.ps1) |
+| Optional toast | Allowlisted outcomes, isolated bounded helper | [Notification.ps1](../../src/Notification.ps1) |
 
 ## Control and data flow
 
@@ -78,6 +81,12 @@ Windows activation is unverified, so custom-home MSIX launch is refused. No assu
 are made about `--profile`, hot reload, old-session migration or private interfaces.
 
 ## Diagram checks
+
+The optional native integration manager is separate from the config transaction. It creates
+Terminal fragments and Shell shortcuts through explicit Apply commands; it never changes
+Desktop credentials or session state. Notification delivery occurs only after a requested
+controller result and cannot affect commit/rollback. See [Windows integration](../WINDOWS-INTEGRATION.md)
+for the separate ownership store, failure recovery, release packaging and UI validation limits.
 
 [evidence.json](evidence.json) ties diagram claims to current source symbols. Run:
 

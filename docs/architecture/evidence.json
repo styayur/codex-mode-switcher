@@ -1,6 +1,6 @@
 {
   "diagram_source": "README.md",
-  "reviewed_on": "2026-10-11",
+  "reviewed_on": "2026-10-12",
   "sources": [
     {
       "anchors": [
@@ -57,8 +57,27 @@
         "Describe"
       ],
       "path": "tests/DesktopController.Tests.ps1"
+    },
+    {
+      "path": "src/Integration.ps1",
+      "anchors": [
+        "function Invoke-CodexIntegration",
+        "function Read-IntegrationLedger"
+      ]
+    },
+    {
+      "path": "src/Notification.ps1",
+      "anchors": [
+        "function Send-ModeNotification"
+      ]
+    },
+    {
+      "path": "src/Public.ps1",
+      "anchors": [
+        "function Start-CodexMode"
+      ]
     }
   ],
   "baseline_commit": "23ce1378926b1692f1d2014c7eb4eb8d6d5205b0",
-  "source_revision": "Checked-out v0.2.0 branch; anchors are validated against current source"
+  "source_revision": "Checked-out v0.2.1 source; anchors are checked against the current revision"
 }

@@ -2,8 +2,8 @@
 
 ## Supported version
 
-Security fixes target the latest released 0.1.x line and the active v0.2.0 development
-branch. v0.2.0 Desktop end-to-end acceptance is pending; automated tests do not establish
+Security fixes target the latest released 0.2.x line. Desktop end-to-end acceptance
+remains pending; automated tests do not establish
 provider-side security, availability or configuration consumption.
 
 ## Reporting a vulnerability
@@ -54,3 +54,21 @@ at the final check/write or launch boundary; close editors and Desktop before sw
 The conservative TOML editor is not a general parser. Start from valid supported syntax.
 A user-level profile can block launch; other override sources are not exhaustively inspected.
 No claim is made that a launched process loaded the desired provider or finished prior tasks.
+
+## Optional Windows integration boundary
+
+The integration manager writes only its dedicated Terminal fragment, current-user Start
+Menu shortcuts and private ownership/backup files. It does not rewrite Terminal settings,
+install a service, create desktop shortcuts or change PATH/ExecutionPolicy. Preview is the
+default; Apply is explicit approval. Uninstall resolves a fixed set of artifact IDs to
+known user folders and requires recorded content hashes. Never import foreign ownership
+data. Modified or unowned artifacts are preserved, including during conditional rollback.
+
+Toast registration is a native identity shortcut, not a persistent activator. Explicit
+Notify passes only allowlisted outcomes to a short-lived Windows PowerShell helper, never
+raw error/config values. Helper failure is isolated from config transaction success. Only
+that owned helper can be stopped at its timeout. UI delivery is controlled by Windows.
+
+Integration operations are not crash-atomic across multiple files. Abrupt termination can
+leave partial/unrecorded artifacts requiring local review. Retained backups and receipts
+are not deleted by uninstall-all; the legacy PowerShell profile block is managed separately.

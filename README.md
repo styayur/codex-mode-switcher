@@ -2,7 +2,7 @@
 
 **A PowerShell controller for safely switching and starting Codex Desktop on Windows.**
 
-**Status:** v0.2.0 development · Desktop end-to-end acceptance pending
+**Version:** `0.2.1` · Windows native integration · Live Desktop provider E2E remains unverified
 
 [Quick Start](#quick-start) · [Usage](#usage) · [Architecture](#architecture) · [中文说明](docs/README.zh-CN.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
@@ -23,13 +23,11 @@ community project, unaffiliated with OpenAI or DeepSeek.
 
 Use Windows and PowerShell **7.4+** as your normal user. No administrator access or Codex
 CLI is required. Desktop must be installed for `-Launch`. Keep the **whole checkout**:
-v0.2.0 uses `src/` alongside the entry script; the v0.1.0 release is a different version.
+The module and entry scripts use `src/`; keep the complete distribution.
 
 ```powershell
 git clone https://github.com/styayur/codex-mode-switcher.git
 cd codex-mode-switcher
-# While this upgrade is under review:
-git switch feat/desktop-controller-v0.2.0
 .\codex-mode.ps1 Diagnose -Json
 ```
 
@@ -60,6 +58,67 @@ that tasks finished. Verify the selected provider/model in a **new Desktop task*
 
 `DeepSeek` is the legacy name for restoring whichever single custom provider you saved.
 The tool does not create accounts, choose provider models or adapt API protocols.
+
+## PowerShell module and Windows integration
+
+Load from a checkout with `Import-Module .\CodexModeSwitcher.psd1`. For normal
+`Import-Module CodexModeSwitcher` discovery, install the [release module archive](https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1)
+under your current-user PowerShell module directory; see [installation instructions](docs/WINDOWS-INTEGRATION.md).
+Importing the module creates no files and launches no application.
+
+```powershell
+Import-Module CodexModeSwitcher
+Get-CodexStatus
+Test-CodexEnvironment
+Start-CodexMode GPT -DryRun
+Start-CodexMode GPT                 # Explicitly starts Desktop after safe switching
+Start-CodexMode DeepSeek
+# Same guards as the script; finish tasks and exit Desktop normally first.
+```
+
+`Start-CodexMode` launches by default; `-ConfigurationOnly` opts out. It also supports
+`-WhatIf`, `-DryRun`, `-NonInteractive`, `-TasksStopped` and bounded wait options. Module
+commands return structured results, including `State=Failed`; callers must inspect the
+result. The script and cmd adapter additionally signal failure with a nonzero exit.
+
+The exported `codex-mode` alias supports the original modes plus integration management:
+
+```powershell
+codex-mode install terminal          # Preview paths and commands; no writes
+codex-mode install terminal -Apply   # Approve installation after reviewing the preview
+codex-mode install startmenu -Apply  # Optional: Codex GPT / DeepSeek / Diagnose
+codex-mode integration list
+codex-mode uninstall terminal -Apply
+codex-mode integration uninstall-all -Apply
+```
+
+Terminal integration adds three uniquely identified profiles through an owned JSON
+fragment; it never rewrites user `settings.json`. Start Menu integration creates three
+native shortcuts only in a dedicated current-user folder. Neither is installed by default.
+There are no desktop shortcuts, context-menu entries or background services. Uninstall
+only removes recorded files whose hashes still match; user edits and unowned files are
+preserved. Uninstall previews are the default too; `-Apply` is explicit approval.
+
+Notifications are separately optional:
+
+```powershell
+codex-mode install notifications     # Preview the notification identity shortcut
+codex-mode install notifications -Apply
+Start-CodexMode GPT -Notify
+# The original script also accepts -Notify.
+codex-mode uninstall notifications -Apply
+```
+
+This registers a native Start Menu identity shortcut, not a background notification
+service. Notifications contain fixed status messages only. Windows can suppress them;
+notification failure never changes the configuration result. No notification is requested
+by module import, diagnostics, DryRun or a command without `-Notify`.
+
+Outside PowerShell, `codex-mode.cmd` provides the same command routing when the checkout
+is explicitly added to PATH; it does not change PATH itself. The legacy profile shortcuts
+remain separately managed by `Install-DesktopShortcut.ps1`.
+
+[Windows integration, ownership and recovery details](docs/WINDOWS-INTEGRATION.md).
 
 ## Authentication and billing
 
@@ -152,7 +211,10 @@ Uninstall from the original checkout before moving it, then reinstall from the n
 <!-- architecture:overview:start -->
 ```mermaid
 flowchart TD
-  Command[PowerShell command] --> Controller[Desktop Controller: validate and plan]
+  Module[PowerShell module or script] --> Command[PowerShell command]
+  Module --> Integration[Optional integration manager: preview and ownership checks]
+  Integration --> Native[Terminal fragments and Start Menu shortcuts]
+  Command --> Controller[Desktop Controller: validate and plan]
   Controller --> Discovery[Discover Windows identity and running state]
   Discovery --> Safe{Safe to switch?}
   Safe -->|Running: user finishes tasks and exits| Wait[Bounded interactive wait]
@@ -170,6 +232,7 @@ flowchart TD
   Win32 --> Observe
   Observe --> Result[Report process result; provider loading unverified]
   Commit -->|Configuration only| Result
+  Result -.-> Toast[Opt-in fixed-text toast; failures isolated]
 ```
 <!-- architecture:overview:end -->
 
@@ -247,8 +310,8 @@ acceptance are reported separately in [the validation record](docs/DESKTOP-VALID
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Real Desktop restart/provider acceptance is still
-required before v0.2.0 release; this branch is delivered for review without auto-merging.
+See [CONTRIBUTING.md](CONTRIBUTING.md). This release adds native integration; real Desktop
+restart/provider acceptance remains a separate, explicitly unverified capability check.
 
 ## License
 

@@ -16,14 +16,16 @@ param(
     [ValidateRange(1, 600)][int]$ExitTimeoutSeconds = 60,
     [ValidateRange(1, 120)][int]$LaunchTimeoutSeconds = 30,
     [string]$DesktopPath, [string]$DesktopAppId, [string]$TransactionId,
-    [switch]$NoLogin, [switch]$SkipDoctor, [switch]$Json, [switch]$PassThru
+    [switch]$NoLogin, [switch]$SkipDoctor, [switch]$Json, [switch]$PassThru, [switch]$Notify
 )
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'src/CodexMode.psm1') -ErrorAction Stop
 $parameters = @{} + $PSBoundParameters
 $parameters.Remove('Json')
 $parameters.Remove('PassThru')
-$result = Invoke-CodexMode @parameters
+$parameters.Remove('Notify')
+$parameters.Remove('Mode')
+$result = Invoke-CodexCommand -Action $Mode -Notify:$Notify @parameters
 if ($Json) { $result | ConvertTo-Json -Depth 8 }
 elseif ($PassThru) { $result }
 else {
