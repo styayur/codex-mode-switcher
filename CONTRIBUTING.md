@@ -6,7 +6,7 @@ as described in [SECURITY.md](SECURITY.md). Contributions use the project's MIT 
 ## Development checks
 
 Use Windows and PowerShell 7.4+. Install Pester 5.7.1 and PSScriptAnalyzer 1.25.0 as shown
-in the README, then run `pwsh -NoProfile -File ./scripts/Test-Project.ps1`. This is the same
+below, then run `pwsh -NoProfile -File ./scripts/Test-Project.ps1`. This is the same
 command used in CI. Import Pester before lint to avoid autoloading a different assembly.
 
 Run `python docs/architecture/verify.py` after source/docs changes. Diagram changes also
@@ -22,7 +22,7 @@ Fault tests should check before/after bytes and the transaction/launch boundary,
 mock call counts. Preserve existing regression scenarios; document intentional compatibility
 changes rather than silently dropping tests.
 
-Keep Desktop-only, Native-first and Zero-resident scope. Do not add a gateway, GUI, daemon,
+Keep PowerShell-native, CLI-first, read-only-first, reversible and minimal-dependency scope. Windows integration stays optional. Do not add a gateway, GUI, daemon,
 CLI profile launcher, forced termination or private Desktop API. Preserve unrelated config,
 back up before writes and refuse unsupported/ambiguous state. Update both language guides,
 troubleshooting, architecture evidence and CHANGELOG for behavior changes.
@@ -38,3 +38,12 @@ Integration tests must mock Get-IntegrationContext into TestDrive. Native Shell 
 creation is allowed only there; real toast submission, Start Menu installation and Terminal
 settings changes are forbidden in automated tests. Build distributable archives from clean
 tracked source using scripts/Build-Release.ps1, never zip the whole working directory.
+
+## Test dependencies
+
+
+```powershell
+Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force -SkipPublisherCheck
+Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
+pwsh -NoProfile -File .\scripts\Test-Project.ps1
+```
