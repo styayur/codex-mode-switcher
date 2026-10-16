@@ -1,6 +1,6 @@
 # Architecture and source evidence
 
-The authoritative diagram is the marked Mermaid block in [README](../../README.md#architecture).
+The authoritative diagram is the marked Mermaid block below. [Back to README](../../README.md).
 It separates **Desktop Controller**, **Config Transaction**, and **Windows Application Activation**.
 This document describes the v0.2.1 implementation; it does not certify provider connectivity.
 
@@ -102,3 +102,34 @@ Windows runner. Rendering proves diagram syntax and reproducibility, not runtime
 
 The earlier v0.1.0 diagram was source-reviewed in commit 23ce137. This update retains its
 verification workflow while replacing the graph and source map for the modular controller.
+
+
+## Overview
+
+<!-- architecture:overview:start -->
+```mermaid
+flowchart TD
+  Module[PowerShell module or script] --> Command[PowerShell command]
+  Module --> Integration[Optional integration manager: preview and ownership checks]
+  Integration --> Native[Terminal fragments and Start Menu shortcuts]
+  Command --> Controller[Desktop Controller: validate and plan]
+  Controller --> Discovery[Discover Windows identity and running state]
+  Discovery --> Safe{Safe to switch?}
+  Safe -->|Running: user finishes tasks and exits| Wait[Bounded interactive wait]
+  Wait --> Safe
+  Safe -->|Unknown or cancelled| Stop[Report without mutation]
+  Safe -->|Ready| Transaction[Config Transaction: lock and check snapshots]
+  Transaction --> Backup[Verified byte backups and Prepared journal]
+  Backup --> Apply[Atomic file replacements and verification]
+  Apply --> Commit[Durable Committed journal; release lock]
+  Apply -->|Failure before commit| Recover[Conditional rollback or recovery required]
+  Commit -->|Explicit Launch; recheck files and identity| Activation[Windows Application Activation]
+  Activation --> MSIX[MSIX: registered AUMID via Windows COM]
+  Activation --> Win32[Win32: signed GUI executable]
+  MSIX --> Observe[Bounded process observation]
+  Win32 --> Observe
+  Observe --> Result[Report process result; provider loading unverified]
+  Commit -->|Configuration only| Result
+  Result -.-> Toast[Opt-in fixed-text toast; failures isolated]
+```
+<!-- architecture:overview:end -->

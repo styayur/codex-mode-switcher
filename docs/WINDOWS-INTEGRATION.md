@@ -7,12 +7,14 @@ model gateway, run background services, or replace Codex's official configuratio
 ## Install and import the module
 
 Windows and PowerShell 7.4+ are required. Download `CodexModeSwitcher-0.2.1.zip` and
-`SHA256SUMS.txt` from the GitHub release. Verify the archive hash and review the source.
+`SHA256SUMS.txt` from [the v0.2.1 release](https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1). Verify the archive hash and review the source.
 The archive contains a `CodexModeSwitcher/` directory with the manifest and runtime files.
 Use a normal current-user module directory; no administrator access is necessary:
 
 ```powershell
 Get-FileHash .\CodexModeSwitcher-0.2.1.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+# Compare the complete hash for the exact filename; stop on mismatch.
 $moduleRoot = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell/Modules'
 if (Test-Path (Join-Path $moduleRoot 'CodexModeSwitcher')) {
     throw 'An installation already exists. Review it and uninstall integrations before upgrading.'
@@ -160,3 +162,31 @@ Manual checks remain: Terminal profile visibility, actual Start Menu search/laun
 toast behavior under Windows policy, and the Desktop provider E2E checklist in
 [DESKTOP-VALIDATION.md](DESKTOP-VALIDATION.md). This release does not claim those interactive
 observations occurred merely because native file tests or CI passed.
+
+
+## Legacy profile shortcuts
+
+These optional functions modify the current user's all-hosts PowerShell profile. They are separate from Terminal/Start Menu integration; preview first and uninstall from the original checkout before moving it:
+
+```powershell
+./scripts/Install-DesktopShortcut.ps1 -DryRun
+./scripts/Install-DesktopShortcut.ps1
+# In a new PowerShell session: cdx-gpt / cdx-deepseek
+./scripts/Install-DesktopShortcut.ps1 -Action Uninstall
+```
+
+Installation backs up the profile and refuses conflicts. Uninstall removes only the unchanged owned block. `-ProfilePath` selects a nondefault profile; use the same target when uninstalling.
+
+## Remove the tool
+
+Preview `codex-mode integration uninstall-all`, then add `-Apply` only after reviewing the recorded targets. Remove any legacy profile block separately as above. Keep the distribution in place until both operations finish; moving it first can leave shortcuts pointing to an old location.
+
+Close shells importing the module, then remove only the dedicated checkout or `CodexModeSwitcher` module folder you installed. This does not restore `config.toml`, erase the saved provider, revoke keys or delete private backups/journals/receipts. To reverse a committed provider selection, select the desired GPT/saved provider before removing the tool. See [transaction recovery](TROUBLESHOOTING.md) for interrupted writes. Preserve backups until configuration is verified; there is no blanket data-cleanup command.
+
+Checksums detect corruption, not independently authenticated provenance. Review downloaded source; do not pipe a remote script into execution. If Windows marks the reviewed files as downloaded, unblock just those files when local policy permits:
+
+```powershell
+Get-ChildItem . -Recurse -File -Include *.ps1,*.psm1,*.psd1,*.cs | Unblock-File
+```
+
+Do not change execution policy or bypass organization signing requirements to follow these examples.

@@ -56,7 +56,7 @@ organization's supported mechanism and verify separately; never paste a key into
 
 ## Download and shortcut issues
 
-Review sources and use Unblock-File for MOTW, as shown in the README. The tool does not
+Review sources and use Unblock-File for MOTW, as shown in [Windows integration](WINDOWS-INTEGRATION.md). The tool does not
 change ExecutionPolicy or bypass required signatures. Keep src/ alongside codex-mode.ps1.
 
 Profile installation refuses function/alias conflicts and edited owned blocks. Use DryRun,
