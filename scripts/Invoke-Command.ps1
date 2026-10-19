@@ -10,7 +10,20 @@ param(
     [string]$DesktopPath, [string]$DesktopAppId, [string]$TransactionId
 )
 $ErrorActionPreference = 'Stop'
-Import-Module (Join-Path $PSScriptRoot '../CodexModeSwitcher.psd1')
+$manifestPath = Join-Path $PSScriptRoot '../CodexModeSwitcher.psd1'
+$modulePath = Join-Path $PSScriptRoot '../src/CodexMode.psm1'
+$missing = @($manifestPath, $modulePath) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+if ($missing.Count) {
+    $message = 'Codex Mode Switcher is incomplete: required module files are missing. Download the complete CodexModeSwitcher-*.zip archive, extract it, and run install.ps1 -Action Install -Force. Do not download only codex-mode.ps1.'
+    [pscustomobject]@{ State = 'Failed'; Code = 'ModuleMissing'; Message = $message; Missing = @($missing | ForEach-Object { [IO.Path]::GetRelativePath((Split-Path $PSScriptRoot -Parent), $_) }) } | ConvertTo-Json -Depth 4
+    exit 2
+}
+try { Import-Module $manifestPath -ErrorAction Stop }
+catch {
+    $message = 'Codex Mode Switcher is incomplete: the module could not be loaded. Download the complete CodexModeSwitcher-*.zip archive, extract it, and run install.ps1 -Action Install -Force. Do not download only codex-mode.ps1.'
+    [pscustomobject]@{ State = 'Failed'; Code = 'ModuleMissing'; Message = $message } | ConvertTo-Json -Depth 4
+    exit 2
+}
 try {
     $result = Invoke-CodexCommand @PSBoundParameters
     $result | ConvertTo-Json -Depth 8

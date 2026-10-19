@@ -19,7 +19,46 @@ param(
     [switch]$NoLogin, [switch]$SkipDoctor, [switch]$Json, [switch]$PassThru, [switch]$Notify
 )
 $ErrorActionPreference = 'Stop'
-Import-Module (Join-Path $PSScriptRoot 'src/CodexMode.psm1') -ErrorAction Stop
+$moduleFile = Join-Path $PSScriptRoot 'src/CodexMode.psm1'
+$moduleFiles = @(
+    'CodexMode.psm1', 'Config.ps1', 'Controller.ps1', 'DesktopDiscovery.ps1',
+    'DesktopLifecycle.ps1', 'Diagnostics.ps1', 'Get-WindowsInventory.ps1',
+    'Integration.ps1', 'NativeShortcut.cs', 'Notification.ps1', 'Public.ps1',
+    'Shortcut.ps1', 'Show-Notification.ps1', 'State.ps1', 'Transaction.ps1',
+    'WindowsActivation.cs'
+)
+$missingModuleFiles = @($moduleFiles | Where-Object {
+    -not (Test-Path -LiteralPath (Join-Path (Join-Path $PSScriptRoot 'src') $_) -PathType Leaf)
+} | ForEach-Object { "src/$_" })
+if ($missingModuleFiles.Count) {
+    $installerPath = Join-Path $PSScriptRoot 'scripts/Install-CodexMode.ps1'
+    $repair = if (Test-Path -LiteralPath $installerPath -PathType Leaf) {
+        "pwsh -NoProfile -File `"$installerPath`" -Action Install -Force"
+    } else {
+        'pwsh -NoProfile -File .\CodexModeSwitcher\install.ps1 -Action Install -Force'
+    }
+    $lines = [Collections.Generic.List[string]]::new()
+    $lines.Add('Codex Mode Switcher is incomplete: the entry script is present but required module files are missing:')
+    foreach ($missing in $missingModuleFiles) { $lines.Add("  - $missing") }
+    $lines.Add('')
+    $lines.Add('A v0.1.0/v0.2.0 single-file codex-mode.ps1 cannot be upgraded by replacing only that file.')
+    $lines.Add('Do not download only codex-mode.ps1. Download the complete CodexModeSwitcher-*.zip release archive, extract it, and run its installer:')
+    $lines.Add("  $repair")
+    $lines.Add('')
+    $lines.Add('The installer deploys the full module to a standalone tool directory and safely migrates an existing single-file entry.')
+    $lines.Add('It does not modify Codex configuration, credentials, sessions or backups under CODEX_HOME.')
+    $message = $lines -join [Environment]::NewLine
+    if ($Json) {
+        [pscustomobject]@{
+            State = 'Failed'; Code = 'ModuleMissing'; Message = $message
+            Entry = $PSCommandPath; Missing = @($missingModuleFiles); RepairCommand = $repair
+        } | ConvertTo-Json -Depth 5
+    } else {
+        [Console]::Error.WriteLine($message)
+    }
+    exit 2
+}
+Import-Module $moduleFile -ErrorAction Stop
 $parameters = @{} + $PSBoundParameters
 $parameters.Remove('Json')
 $parameters.Remove('PassThru')

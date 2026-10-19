@@ -10,14 +10,17 @@
 
 ## 快速开始
 
-需要 Windows、PowerShell 7.4+，以普通用户运行，无需管理员权限或 Codex CLI。保留完整目录及 `src/`，先审查脚本：
+需要 Windows、PowerShell 7.4+，以普通用户运行，无需管理员权限或 Codex CLI。请下载完整的 `CodexModeSwitcher-<version>.zip` Release 压缩包，核对 `SHA256SUMS.txt`，解压后安装：
 
 ```powershell
-git clone https://github.com/styayur/codex-mode-switcher.git
-cd codex-mode-switcher
-pwsh -NoProfile -File ./codex-mode.ps1 Diagnose -Json
-pwsh -NoProfile -File ./codex-mode.ps1 GPT -DryRun -Json
+pwsh -NoProfile -File .\CodexModeSwitcher\install.ps1 -Action Install
+& "$env:LOCALAPPDATA\Programs\CodexModeSwitcher\codex-mode.ps1" Diagnose -Json
+pwsh -NoProfile -File .\CodexModeSwitcher\install.ps1 -Action Verify
 ```
+
+安装器把入口脚本和完整模块部署到 `%LOCALAPPDATA%\Programs\CodexModeSwitcher`，不把
+`CODEX_HOME` 当作程序目录，也不会改动已有配置、认证、会话、状态或备份。v0.1.0/v0.2.0
+单文件版本会先备份，再生成转发入口。**不要只下载 `codex-mode.ps1`。** 详见[安装、更新与卸载](INSTALL.md)。
 
 诊断不写配置或启动应用；预览不写文件、不加锁、不提问。输出包含本地路径，分享前需脱敏。应用运行中或配置不受支持时，预览可能无法继续。下载被阻止时参见[校验和 MOTW 说明](WINDOWS-INTEGRATION.md)，不要修改执行策略或绕过组织签名要求。
 

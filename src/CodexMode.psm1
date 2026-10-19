@@ -1,6 +1,6 @@
 #requires -Version 7.4
 Set-StrictMode -Version Latest
-$script:ModeVersion = '0.2.1'
+$script:ModeVersion = '0.2.2'
 $script:ManagedComment = '# Managed provider/auth selection: codex-mode.ps1'
 $script:NativeKeys = @('model', 'model_reasoning_effort', 'model_reasoning_summary', 'model_verbosity')
 $script:SwitchKeys = @('model', 'model_provider', 'model_catalog_json', 'openai_base_url',
