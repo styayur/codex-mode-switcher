@@ -6,23 +6,27 @@ model gateway, run background services, or replace Codex's official configuratio
 
 ## Install and import the module
 
-Windows and PowerShell 7.4+ are required. Download `CodexModeSwitcher-0.2.1.zip` and
-`SHA256SUMS.txt` from [the v0.2.1 release](https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1). Verify the archive hash and review the source.
-The archive contains a `CodexModeSwitcher/` directory with the manifest and runtime files.
-Use a normal current-user module directory; no administrator access is necessary:
+Windows and PowerShell 7.4+ are required. Download the complete
+`CodexModeSwitcher-<version>.zip` and `SHA256SUMS.txt` from
+[Releases](https://github.com/styayur/codex-mode-switcher/releases). Verify the archive hash
+and review the source. Do not download only `codex-mode.ps1`; the entry point depends on the
+whole `src/` tree.
 
 ```powershell
-Get-FileHash .\CodexModeSwitcher-0.2.1.zip -Algorithm SHA256
+Get-FileHash .\CodexModeSwitcher-0.2.2.zip -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 # Compare the complete hash for the exact filename; stop on mismatch.
-$moduleRoot = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell/Modules'
-if (Test-Path (Join-Path $moduleRoot 'CodexModeSwitcher')) {
-    throw 'An installation already exists. Review it and uninstall integrations before upgrading.'
-}
-Expand-Archive .\CodexModeSwitcher-0.2.1.zip -DestinationPath $moduleRoot
-Import-Module CodexModeSwitcher
+Expand-Archive .\CodexModeSwitcher-0.2.2.zip -DestinationPath .
+pwsh -NoProfile -File .\CodexModeSwitcher\install.ps1 -Action Install
+Import-Module "$env:LOCALAPPDATA\Programs\CodexModeSwitcher\CodexModeSwitcher.psd1"
 Get-Command -Module CodexModeSwitcher
 ```
+
+The installer uses the standalone program directory
+`%LOCALAPPDATA%\Programs\CodexModeSwitcher` by default. It preserves `CODEX_HOME`
+configuration, credentials, sessions, state and backups, and can migrate a v0.1.0/v0.2.0
+single-file entry point with a backup and forwarding shim. See
+[installation, update and removal](INSTALL.md) for update, verify and uninstall.
 
 For a portable checkout, use `Import-Module ./CodexModeSwitcher.psd1`. The archive and
 checkout must stay together with src/ and entry scripts. Nothing changes PSModulePath,

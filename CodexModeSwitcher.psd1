@@ -1,6 +1,6 @@
 @{
     RootModule = 'src/CodexMode.psm1'
-    ModuleVersion = '0.2.1'
+    ModuleVersion = '0.2.2'
     GUID = 'db72bd9c-e7a8-44be-9a4f-58c16d53e047'
     Author = 'styayur'
     Copyright = '(c) styayur. MIT License.'

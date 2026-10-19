@@ -19,3 +19,8 @@ jobs:
       - name: Syntax, static analysis and regression tests
         shell: pwsh
         run: ./scripts/Test-Project.ps1
+      - name: Build and verify the complete release payload
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'codex-mode-release'
+          ./scripts/Build-Release.ps1 -OutputDirectory $output -Json

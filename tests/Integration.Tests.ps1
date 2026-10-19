@@ -205,7 +205,7 @@ Describe 'Public PowerShell module API' {
     BeforeEach { Import-Module (Join-Path (Split-Path $PSScriptRoot) 'src/CodexMode.psm1') }
     It 'validates the named manifest and imports by name from an isolated module path' {
         $root=Split-Path $PSScriptRoot
-        (Test-ModuleManifest (Join-Path $root 'CodexModeSwitcher.psd1')).Version | Should -Be '0.2.1'
+        (Test-ModuleManifest (Join-Path $root 'CodexModeSwitcher.psd1')).Version | Should -Be '0.2.2'
         $destination=Join-Path $TestDrive 'modules/CodexModeSwitcher'
         [IO.Directory]::CreateDirectory($destination) | Out-Null
         Copy-Item (Join-Path $root 'CodexModeSwitcher.psd1') $destination

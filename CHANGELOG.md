@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.2] - 2026-10-19
+
+### Fixed
+
+- Installer deploys the complete entry point and module payload to a standalone tool
+  directory instead of treating `CODEX_HOME` as the program directory.
+- v0.1.0/v0.2.0 single-file entry points are backed up and migrated to a forwarding shim;
+  existing configuration, credentials, sessions, state and backups are preserved.
+- Missing module files now produce explicit `ModuleMissing` repair instructions instead of
+  a raw `Import-Module` exception.
+- Verify, update and uninstall cover the complete program payload, ownership receipt,
+  hashes and recorded legacy shims. Broken installations remain uninstallable.
+- Release packaging validates that the archive contains the complete payload, rejects
+  entry-only delivery and checks SHA-256 manifests before publishing.
+
+### Added
+
+- `install.ps1` with `Install`, `Update`, `Verify` and `Uninstall`, plus `-DryRun`, `-Json`
+  and `-PassThru`.
+- Release manifest with per-file hashes and regression coverage for install, upgrade,
+  compatibility, broken-install verification and release archive validation.
+
 ## [0.2.1] - 2026-10-12
 
 ### Added
@@ -57,6 +79,7 @@
 
 [0.2.0]: https://github.com/styayur/codex-mode-switcher/compare/main...feat/desktop-controller-v0.2.0
 [0.2.1]: https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.1
+[0.2.2]: https://github.com/styayur/codex-mode-switcher/releases/tag/v0.2.2
 
 ## [0.1.0] - 2026-10-04
 

@@ -20,6 +20,7 @@ mode-switcher/
 ownership.json
 CodexModeSwitcher-*.zip
 SHA256SUMS.txt
+release-manifest.json
 deepseek-state.json
 gpt-state.json
 *.codex-mode.lock

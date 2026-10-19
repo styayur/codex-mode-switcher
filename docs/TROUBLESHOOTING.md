@@ -19,6 +19,8 @@ attach configuration, backups, credentials or session data.
 | ConcurrentChange / LockBusy | Close configuration editors and wait for another controller invocation to finish. Do not delete locks or overwrite another writer's changes. |
 | RecoveryRequired | Inspect PendingTransactions and follow the interrupted transaction procedure below. |
 | LaunchFailed / LaunchTimeout / LaunchUnknown / LaunchRace | Check Committed. A committed switch is retained. Inspect Desktop and retry only after resolving task and application state. |
+| ModuleMissing | The entry script was copied without `src/`. Download the complete release archive and run `install.ps1 -Action Install`. Do not replace only `codex-mode.ps1`. |
+| ReceiptMissing / FilesInvalid | The installed program files are incomplete or modified. Run `install.ps1 -Action Verify -Json`, then reinstall from a complete archive. Uninstall still removes a broken owned installation. |
 
 ## Interrupted transaction
 
@@ -56,8 +58,12 @@ organization's supported mechanism and verify separately; never paste a key into
 
 ## Download and shortcut issues
 
-Review sources and use Unblock-File for MOTW, as shown in [Windows integration](WINDOWS-INTEGRATION.md). The tool does not
-change ExecutionPolicy or bypass required signatures. Keep src/ alongside codex-mode.ps1.
+Download the complete `CodexModeSwitcher-<version>.zip` release archive, not an individual
+script. Verify it against `SHA256SUMS.txt`, extract it and run `install.ps1 -Action Install`.
+Review sources and use Unblock-File for MOTW, as shown in
+[Windows integration](WINDOWS-INTEGRATION.md). The tool does not change ExecutionPolicy or
+bypass required signatures. A v0.1.0/v0.2.0 single-file `codex-mode.ps1` is migrated to a
+standalone tool directory with a backup and forwarding shim; it is not upgraded in place.
 
 Profile installation refuses function/alias conflicts and edited owned blocks. Use DryRun,
 review the existing profile and its backup, and resolve the conflict manually. Uninstall

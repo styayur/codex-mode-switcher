@@ -13,13 +13,20 @@ For people who already have a working custom provider in Codex Desktop and want 
 
 ## Quick start
 
-Use **Windows and PowerShell 7.4+**, as your normal user. No administrator access, Codex CLI or third-party runtime module is required. Keep the whole distribution, including `src/`.
+Use **Windows and PowerShell 7.4+**, as your normal user. No administrator access, Codex CLI or third-party runtime module is required.
+
+Download the complete `CodexModeSwitcher-<version>.zip` release archive, verify it against `SHA256SUMS.txt`, extract it and install:
 
 ```powershell
-git clone https://github.com/styayur/codex-mode-switcher.git
-cd codex-mode-switcher
-pwsh -NoProfile -File ./codex-mode.ps1 Diagnose -Json
+pwsh -NoProfile -File .\CodexModeSwitcher\install.ps1 -Action Install
+& "$env:LOCALAPPDATA\Programs\CodexModeSwitcher\codex-mode.ps1" Diagnose -Json
 ```
+
+The installer deploys the entry script and the complete module to
+`%LOCALAPPDATA%\Programs\CodexModeSwitcher`. It does not use `CODEX_HOME` as a program
+directory and leaves existing configuration, credentials, sessions, state and backups
+untouched. A v0.1.0/v0.2.0 single-file entry is backed up and replaced with a forwarding
+shim. **Do not download only `codex-mode.ps1`.** See [installation, update and removal](docs/INSTALL.md).
 
 `Diagnose` reads local configuration and Windows application metadata; it does not write configuration or launch Desktop. Output includes local paths: redact it before sharing. Review downloaded source; see [archive verification and MOTW handling](docs/WINDOWS-INTEGRATION.md#install-and-import-the-module) if execution is blocked. Organization signing policy still applies.
 
@@ -84,7 +91,8 @@ codex-mode integration uninstall-all  # Preview only
 | Need | Guide |
 | --- | --- |
 | Commands, automation flags and compatibility | [Usage](docs/USAGE.md) |
-| Install a module, verify a release, add/remove integrations | [Windows integration](docs/WINDOWS-INTEGRATION.md) |
+| Install, update, verify or uninstall the program | [Installation](docs/INSTALL.md) |
+| Add or remove optional Windows integrations | [Windows integration](docs/WINDOWS-INTEGRATION.md) |
 | Diagnose or recover an interrupted operation | [Troubleshooting](docs/TROUBLESHOOTING.md) |
 | Transaction and activation design | [Architecture and source evidence](docs/architecture/README.md) |
 | What was actually tested | [Desktop validation](docs/DESKTOP-VALIDATION.md) · [Historical v0.1 validation](docs/VALIDATION.md) |
